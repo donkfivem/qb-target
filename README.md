@@ -16,9 +16,11 @@ qb-target is a targeting solution that allows interaction with any predefined en
 
 * Credit to [ms-peds](https://github.com/MiddleSkillz/ms-peds) for allowing me to use their awesome ped spawner inside the target!
 
-## Dependency
+## Dependencies
 
 * [PolyZone](https://github.com/mkafrin/PolyZone)
+* [image-to-txn](https://github.com/logan-mcgee/image-to-txn)
+* [ox_lib](https://github.com/overextended/ox_lib)
 
 ## Optional Dependency
 
