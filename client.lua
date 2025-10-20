@@ -103,7 +103,7 @@ CreateThread(function()
 	local txd = CreateRuntimeTxd("example_txd")
 	local rt = CreateRuntimeTexture(txd, "cool_stuff", 64, 89)
 	local img = exports['image-to-txn']:AddImage("https://i.ibb.co/LnDPx0W/Asset-1-1.png", rt, function()
-			return
+		return
 	end)
 
 	local sleep
