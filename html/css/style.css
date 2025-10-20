@@ -1,87 +1,135 @@
-@import url("https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&display=swap");
-
-:root {
-    /* Colors */
-    --md-primary: #f44336;
-    --md-on-primary: #ffffff;
-    --md-error: #b3261e;
-    --md-on-error: #ffffff;
-    --md-success: #386a20;
-    --md-on-success: #ffffff;
-    --md-success-container: #b6f397;
-    --md-on-success-container: #0c2000;
-    --md-surface: #1c1b1f;
-    --md-on-surface: #e6e1e5;
-    --md-surface-container: #211f26;
-    --md-surface-container-high: #2b2930;
-    --md-surface-container-highest: #36343b;
-    --md-shadow: rgba(0, 0, 0, 0.15);
-    --md-radius-small: 8px;
-
-    /* Typography */
-    --md-typescale-label-medium-size: 12px;
-    --font-primary: "Exo 2", Arial, sans-serif;
-    --font-weight-regular: 400;
-    --font-weight-medium: 500;
-    --font-weight-bold: 700;
-
-    /* Elevation */
-    --md-elevation-1: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-}
-
 body {
-    overflow: hidden;
-    font-family: var(--font-primary);
+  overflow: hidden;
 }
 
-#target-eye {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    display: none;
-    transform: translateY(-50%) translateX(-50%);
-    font-size: 2vh;
-    text-shadow: 0 2px 4px var(--md-shadow);
-    transition: color 0.3s ease;
+/* Cogwheel Container */
+#cogwheel-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateY(-50%) translateX(-50%);
+  width: 3vh;
+  height: 3vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* Cogwheel Icon */
+#cogwheel {
+  width: 3vh;
+  height: 3vh;
+  filter: drop-shadow(0 0 5px rgba(196, 221, 231, 0.8));
+  transition: all 0.3s ease;
+}
+
+/* Target Rings Animation */
+@keyframes ringPulse {
+  0% {
+    opacity: 0.4;
+    stroke-width: 1.5;
+  }
+  50% {
+    opacity: 1;
+    stroke-width: 3.5;
+  }
+  100% {
+    opacity: 0.4;
+    stroke-width: 1.5;
+  }
+}
+
+@keyframes ringRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dotPulse {
+  0%, 100% {
+    r: 2;
+    opacity: 0.8;
+  }
+  50% {
+    r: 6;
+    opacity: 1;
+  }
+}
+
+@keyframes iconScale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 15px rgba(196, 221, 231, 1)) drop-shadow(0 0 30px rgba(196, 221, 231, 0.8));
+  }
+  50% {
+    filter: drop-shadow(0 0 35px rgba(196, 221, 231, 1)) drop-shadow(0 0 60px rgba(196, 221, 231, 1)) drop-shadow(0 0 80px rgba(196, 221, 231, 0.6));
+  }
+}
+
+/* Active state - animated target */
+#cogwheel.active {
+  animation: iconScale 0.8s ease-in-out infinite, glowPulse 0.8s ease-in-out infinite;
+}
+
+#cogwheel.active .outer-ring {
+  animation: ringPulse 0.8s ease-in-out infinite, ringRotate 3s linear infinite;
+  transform-origin: center;
+  stroke-width: 2.5;
+}
+
+#cogwheel.active .middle-ring {
+  animation: ringPulse 0.8s ease-in-out infinite 0.15s, ringRotate 2s linear infinite reverse;
+  transform-origin: center;
+  stroke-width: 2.5;
+}
+
+#cogwheel.active .inner-ring {
+  animation: ringPulse 0.8s ease-in-out infinite 0.3s, ringRotate 1.5s linear infinite;
+  transform-origin: center;
+  stroke-width: 2.5;
+}
+
+#cogwheel.active .target-dot {
+  animation: dotPulse 0.8s ease-in-out infinite;
+}
+
+#cogwheel.active .target-line {
+  opacity: 1;
+  stroke-width: 3;
+}
+
+/* Target Label Wrapper */
 #target-label-wrapper {
-    position: absolute;
-    display: flex;
-    align-content: center;
-    justify-content: center;
-    flex-direction: row;
-    left: 51.5%;
-    width: fit-content;
-    height: 100%;
-    top: 49.25%;
+  position: absolute;
+  display: flex;
+  align-content: center;
+  justify-content: center;
+  flex-direction: row;
+  left: 52%;
+  width: fit-content;
+  height: fit-content;
+  top: 48.5%;
 }
 
+/* Target Label */
 #target-label {
-    list-style: none;
-    font-size: var(--md-typescale-label-medium-size, 1vh);
-    font-weight: var(--font-weight-medium, bold);
-    font-family: var(--font-primary, Arial, sans-serif);
-    color: var(--md-on-surface);
-    user-select: none;
-    white-space: nowrap;
-    text-shadow: 0 2px 4px var(--md-shadow);
-}
-
-[id^="target-option-"] {
-    margin-bottom: 0.2vh;
-    padding: 0.45rem;
-    background: var(--md-surface-container-high);
-    color: var(--md-on-surface);
-    box-shadow: var(--md-elevation-1);
-    transition: transform 0.3s ease, background-color 0.2s ease;
-}
-
-[id^="target-option-"]:hover {
-    background: var(--md-surface-container-highest);
-    transform: translateX(10px);
-}
-
-.target-success {
-    color: var(--md-success, #386a20) !important;
+  list-style: none;
+  font-size: 1.2vh;
+  font-weight: 600;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: white;
+  user-select: none;
+  white-space: nowrap;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }

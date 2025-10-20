@@ -23,8 +23,8 @@ local HasEntityClearLosToEntity = HasEntityClearLosToEntity
 local currentResourceName = GetCurrentResourceName()
 local Config, Types, Players, Entities, Models, Zones, nuiData, sendData, sendDistance = Config, { {}, {}, {} }, {}, {},
 	{}, {}, {}, {}, {}
-local playerPed, targetActive, hasFocus, success, pedsReady, allowTarget = PlayerPedId(), false, false, false, false,
-	true
+local playerPed, targetActive, hasFocus, success, pedsReady, allowTarget, showingLabels = PlayerPedId(), false, false, false, false,
+	true, false
 local screen = {}
 local table_wipe = table.wipe
 local pairs = pairs
@@ -32,6 +32,22 @@ local pcall = pcall
 local CheckOptions = CheckOptions
 local Bones = Load('bones')
 local listSprite = {}
+local QBCore = exports['qb-core']:GetCoreObject()
+
+
+local spritesEnabled = GetResourceKvpInt('spritesEnabled') or 1
+
+RegisterCommand('toggletarget', function()
+	spritesEnabled = spritesEnabled == 1 and 0 or 1
+	SetResourceKvpInt('spritesEnabled', spritesEnabled)
+	
+	if spritesEnabled == 1 then
+		QBCore.Functions.Notify('Target Assistant Disabled', 'error')
+	else
+		QBCore.Functions.Notify('Target Assistant Enabled', 'success')
+	end
+end)
+
 
 ---------------------------------------
 --- Source: https://github.com/citizenfx/lua/blob/luaglm-dev/cfx/libs/scripts/examples/scripting_gta.lua
@@ -65,40 +81,111 @@ end
 
 -- Functions
 
-local function DrawTarget()
-	CreateThread(function()
-		while not HasStreamedTextureDictLoaded('shared') do
-			Wait(10)
-			RequestStreamedTextureDict('shared', true)
+local function AllowRefuel(state, electric) 
+    if state then
+		if electric then
+			AllowElectricRefuel = true
+		else
+        	Allowrefuel = true
 		end
-		local sleep
-		local r, g, b, a
-		while targetActive do
-			sleep = 500
-			for _, zone in pairs(listSprite) do
-				sleep = 0
-
-				r = zone.targetoptions.drawColor?[1] or Config.DrawColor[1]
-				g = zone.targetoptions.drawColor?[2] or Config.DrawColor[2]
-				b = zone.targetoptions.drawColor?[3] or Config.DrawColor[3]
-				a = zone.targetoptions.drawColor?[4] or Config.DrawColor[4]
-
-				if zone.success then
-					r = zone.targetoptions.successDrawColor?[1] or Config.SuccessDrawColor[1]
-					g = zone.targetoptions.successDrawColor?[2] or Config.SuccessDrawColor[2]
-					b = zone.targetoptions.successDrawColor?[3] or Config.SuccessDrawColor[3]
-					a = zone.targetoptions.successDrawColor?[4] or Config.SuccessDrawColor[4]
-				end
-
-				SetDrawOrigin(zone.center.x, zone.center.y, zone.center.z, 0)
-				DrawSprite('shared', 'emptydot_32', 0, 0, 0.01, 0.02, 0, r, g, b, a)
-				ClearDrawOrigin()
-			end
-			Wait(sleep)
+    else
+		if electric then
+			AllowElectricRefuel = false
+		else
+			Allowrefuel = false
 		end
-		listSprite = {}
+    end
+end exports('AllowRefuel', AllowRefuel)
+
+CreateThread(function()
+	Wait(10000)
+
+	local txd = CreateRuntimeTxd("example_txd")
+	local rt = CreateRuntimeTexture(txd, "cool_stuff", 64, 89)
+	local img = exports['image-to-txn']:AddImage("https://i.ibb.co/LnDPx0W/Asset-1-1.png", rt, function()
+			return
 	end)
-end
+
+	local sleep
+	local r, g, b, a
+	local spritesOpacity = {}
+	local transitionDone = {}
+
+	while true do
+			sleep = 1000
+
+			if spritesEnabled == 0 then
+					for _, zone in pairs(listSprite) do
+							sleep = 0
+
+							r = 196
+							g = 221
+							b = 231
+
+
+							local id = tostring(math.floor(math.abs(zone.center.x) + 0.5))
+
+
+							--[[ if zone.remove > do transition and delete from listSprite ]]
+							if zone.remove then
+									-- Reducir la opacidad de 255 a 0 gradualmente
+									if spritesOpacity[id] and spritesOpacity[id] > 0 then
+											spritesOpacity[id] = spritesOpacity[id] - 5  -- Valor por el que reduciremos la opacidad en cada iteración
+											if spritesOpacity[id] < 0 then
+													spritesOpacity[id] = 0
+											end
+									end
+							end 
+
+
+							-- Generar un ID único para el sprite basado en su posición
+
+							-- Si el sprite no ha pasado por la transición, iniciar la transición
+							if not transitionDone[id] then
+									if not spritesOpacity[id] then
+											spritesOpacity[id] = 0
+									end
+
+									-- Incrementar la opacidad de 0 a 255 gradualmente
+									if spritesOpacity[id] and spritesOpacity[id] < 255 then
+											spritesOpacity[id] = spritesOpacity[id] + 5  -- Valor por el que incrementaremos la opacidad en cada iteración
+											if spritesOpacity[id] > 255 then
+													spritesOpacity[id] = 255
+											end
+									else
+											transitionDone[id] = true  -- Marcar la transición como completada para este sprite
+									end
+							end
+
+							a = spritesOpacity[id] or 255
+
+							SetDrawOrigin(zone.center.x, zone.center.y, zone.center.z, 0)
+							DrawSprite("example_txd", "cool_stuff", 0, 0, 0.0082, 0.0139, 0, r, g, b, a)
+							ClearDrawOrigin()
+					end
+			end
+
+			-- Limpiar la tabla de transiciones cuando el sprite ya no está en listSprite
+			local currentIds = {}
+			for _, zone in pairs(listSprite) do
+					local id = tostring(math.floor(math.abs(zone.center.x) + 0.5))
+					currentIds[id] = true
+			end
+
+			for id in pairs(transitionDone) do
+					if not currentIds[id] then
+							transitionDone[id] = nil
+							spritesOpacity[id] = nil
+					end
+			end
+
+			Wait(sleep)
+	end
+	listSprite = {}
+end)
+
+
+
 
 local function RaycastCamera(flag, playerCoords)
 	if not playerPed then playerPed = PlayerPedId() end
@@ -138,25 +225,34 @@ local function DisableNUI()
 	SetNuiFocus(false, false)
 	SetNuiFocusKeepInput(false)
 	hasFocus = false
+	showingLabels = false
 end
 
 exports('DisableNUI', DisableNUI)
 
 local function EnableNUI(options)
-	if not targetActive or hasFocus then return end
-	SetCursorLocation(0.5, 0.5)
-	SetNuiFocus(true, true)
-	SetNuiFocusKeepInput(true)
-	hasFocus = true
-	SendNUIMessage({ response = 'validTarget', data = options })
+	if not targetActive then return end
+	if not hasFocus and not showingLabels then
+		showingLabels = true
+		SendNUIMessage({ response = 'validTarget', data = options })
+	end
 end
 
 exports('EnableNUI', EnableNUI)
 
+local function EnableFocus()
+	if not showingLabels or hasFocus then return end
+	SetCursorLocation(0.5, 0.5)
+	SetNuiFocus(true, true)
+	SetNuiFocusKeepInput(true)
+	hasFocus = true
+	showingLabels = false
+end
+
 local function LeftTarget()
 	SetNuiFocus(false, false)
 	SetNuiFocusKeepInput(false)
-	success, hasFocus = false, false
+	success, hasFocus, showingLabels = false, false, false
 	table_wipe(sendData)
 	SendNUIMessage({ response = 'leftTarget' })
 end
@@ -168,7 +264,7 @@ local function DisableTarget(forcedisable)
 	SetNuiFocus(false, false)
 	SetNuiFocusKeepInput(false)
 	Wait(100)
-	targetActive, success, hasFocus = false, false, false
+	targetActive, success, hasFocus, showingLabels = false, false, false, false
 	SendNUIMessage({ response = 'closeTarget' })
 end
 
@@ -189,7 +285,6 @@ local function SetupOptions(datatable, entity, distance, isZone)
 	for _, data in pairs(datatable) do
 		if CheckOptions(data, entity, distance) then
 			slot = data.num or slot + 1
-			if sendData[slot] then slot = #sendData + 1 end
 			sendData[slot] = data
 			sendData[slot].entity = entity
 			nuiData[slot] = {
@@ -220,15 +315,13 @@ local function CheckEntity(flag, datatable, entity, distance)
 	success = true
 	SendNUIMessage({ response = 'foundTarget', data = nuiData[slot].targeticon, options = nuiData })
 	DrawOutlineEntity(entity, true)
+	EnableNUI(nuiData)
 	while targetActive and success do
 		local _, dist, entity2 = RaycastCamera(flag)
 		if entity ~= entity2 then
 			LeftTarget()
 			DrawOutlineEntity(entity, false)
 			break
-		elseif not hasFocus and IsDisabledControlPressed(0, Config.MenuControlKey) then
-			EnableNUI(nuiData)
-			DrawOutlineEntity(entity, false)
 		else
 			for k, v in pairs(sendDistance) do
 				if v and dist > k then
@@ -269,6 +362,96 @@ end
 
 exports('CheckBones', CheckBones)
 
+
+CreateThread(function()
+	while true do 
+		Wait(1000)
+
+		if spritesEnabled == 0 then
+
+			for k, zone in pairs(Zones) do
+				if #(GetEntityCoords(PlayerPedId()) - zone.center) < 3 then
+					listSprite[k] = zone
+				else
+
+					if listSprite[k] then
+						listSprite[k].remove = true
+						listSprite[k] = zone
+						SetTimeout(560, function()
+							listSprite[k] = nil
+						end)
+					end
+				end
+			end
+
+			local nearbyObjects = lib.getNearbyObjects(GetEntityCoords(PlayerPedId()), 3)
+			for k, v in pairs(Models) do
+				for i = 1, #nearbyObjects do
+					if GetEntityModel(nearbyObjects[i].object) == k and #(GetEntityCoords(PlayerPedId()) - GetEntityCoords(nearbyObjects[i].object)) < 5 then
+						listSprite[nearbyObjects[i].object] = {
+							center = GetEntityCoords(nearbyObjects[i].object),
+						}
+					elseif GetEntityModel(nearbyObjects[i].object) == k and #(GetEntityCoords(PlayerPedId()) - GetEntityCoords(nearbyObjects[i].object)) > 5 then
+						if listSprite[nearbyObjects[i].object] then
+							listSprite[nearbyObjects[i].object] = {
+								center = GetEntityCoords(nearbyObjects[i].object),
+								remove = true
+							}
+							SetTimeout(560, function()
+								listSprite[k] = nil
+							end)
+						end
+					end
+				end
+			end
+
+			for k, v in pairs(Entities) do
+				
+				if NetworkDoesNetworkIdExist(k) then
+					local coords = GetEntityCoords(NetworkGetEntityFromNetworkId(k))
+
+					if #(GetEntityCoords(PlayerPedId()) - coords) < 3 then
+						listSprite[k] = {
+							center = coords,
+						}
+					else
+
+						if listSprite[k] then
+							listSprite[k] = {
+								center = coords,
+								remove = true
+							}
+							SetTimeout(560, function()
+								listSprite[k] = nil
+							end)
+						end
+
+					end
+				end
+			end
+
+			for k, v in pairs(listSprite) do
+				if #(GetEntityCoords(PlayerPedId()) - v.center) < 3 then
+					listSprite[k] = v
+				else
+
+					if listSprite[k] then
+						listSprite[k] = {
+							center = v.center,
+							remove = true
+						}
+						SetTimeout(560, function()
+							listSprite[k] = nil
+						end)
+					end
+
+				end
+			end
+		end
+
+	end
+end)
+
 local function EnableTarget()
 	if not allowTarget or success or (not Config.Standalone and not LocalPlayer.state['isLoggedIn']) or IsNuiFocused() or (Config.DisableInVehicle and IsPedInAnyVehicle(playerPed or PlayerPedId(), false)) then return end
 	if targetActive then return end
@@ -277,7 +460,6 @@ local function EnableTarget()
 	playerPed = PlayerPedId()
 	screen.ratio = GetAspectRatio(true)
 	screen.fov = GetFinalRenderedCamFov()
-	if Config.DrawSprite then DrawTarget() end
 
 	SendNUIMessage({ response = 'openTarget' })
 	CreateThread(function()
@@ -292,7 +474,7 @@ local function EnableTarget()
 				DisableControlAction(0, 5, true) -- look left only
 				DisableControlAction(0, 6, true) -- look right only
 				DisableControlAction(0, 25, true) -- input aim
-				DisableControlAction(0, 24, true) -- attack
+				DisableControlAction(0, 24, true) -- attack (always disabled during targeting)
 			end
 			EnableControlAction(0, 30, true) -- move left/right
 			EnableControlAction(0, 31, true) -- move forward/back
@@ -300,6 +482,11 @@ local function EnableTarget()
 			if not hasFocus then
 				EnableControlAction(0, 1, true) -- look left/right
 				EnableControlAction(0, 2, true) -- look up/down
+			end
+
+			-- Check for left click when labels are showing
+			if showingLabels and not hasFocus and IsDisabledControlJustPressed(0, 24) then
+				EnableFocus()
 			end
 
 			Wait(0)
@@ -343,6 +530,7 @@ local function EnableTarget()
 							success = true
 							SendNUIMessage({ response = 'foundTarget', data = nuiData[slot].targeticon, options = nuiData })
 							DrawOutlineEntity(entity, true)
+							EnableNUI(nuiData)
 							while targetActive and success do
 								local coords2, dist, entity2 = RaycastCamera(flag)
 								if entity == entity2 then
@@ -351,9 +539,6 @@ local function EnableTarget()
 										LeftTarget()
 										DrawOutlineEntity(entity, false)
 										break
-									elseif not hasFocus and IsDisabledControlPressed(0, Config.MenuControlKey) then
-										EnableNUI(nuiData)
-										DrawOutlineEntity(entity, false)
 									else
 										for k, v in pairs(sendDistance) do
 											if v and dist > k then
@@ -391,7 +576,7 @@ local function EnableTarget()
 					if data and next(data) then CheckEntity(flag, data, entity, distance) end
 				end
 			else
-				sleep = sleep + 20
+				sleep += 20
 			end
 			if not success then
 				-- Zone targets
@@ -402,12 +587,14 @@ local function EnableTarget()
 						closestZone = zone
 					end
 					if Config.DrawSprite then
-						local testCentre = type(zone.center) == 'vector2' and vector3(zone.center.x, zone.center.y, zone.maxZ) or zone.center
-						if #(coords - testCentre) < (zone.targetoptions.drawDistance or Config.DrawDistance) then
+					--[[ 	if #(coords - zone.center) < 30 then
+							listSprite[k] = zone
+						end ]]
+						--[[ if #(coords - zone.center) < (zone.targetoptions.drawDistance or Config.DrawDistance) then
 							listSprite[k] = zone
 						else
 							listSprite[k] = nil
-						end
+						end ]]
 					end
 				end
 				if closestZone then
@@ -415,37 +602,35 @@ local function EnableTarget()
 					if next(nuiData) then
 						success = true
 						SendNUIMessage({ response = 'foundTarget', data = nuiData[slot].targeticon, options = nuiData })
-						if Config.DrawSprite then
+						--[[ if Config.DrawSprite then
 							listSprite[closestZone.name].success = true
-						end
+						end ]]
 						DrawOutlineEntity(entity, true)
+						EnableNUI(nuiData)
 						while targetActive and success do
 							local newCoords, dist = RaycastCamera(flag)
 							if not closestZone:isPointInside(newCoords) or dist > closestZone.targetoptions.distance then
 								LeftTarget()
 								DrawOutlineEntity(entity, false)
 								break
-							elseif not hasFocus and IsDisabledControlPressed(0, Config.MenuControlKey) then
-								EnableNUI(nuiData)
-								DrawOutlineEntity(entity, false)
 							end
 							Wait(0)
 						end
-						if Config.DrawSprite and listSprite[closestZone.name] then -- Check for when the targetActive is false and it removes the zone from listSprite
+					--[[ 	if Config.DrawSprite and listSprite[closestZone.name] then -- Check for when the targetActive is false and it removes the zone from listSprite
 							listSprite[closestZone.name].success = false
-						end
+						end ]]
 						LeftTarget()
 						DrawOutlineEntity(entity, false)
 					end
 				else
-					sleep = sleep + 20
+					sleep += 20
 				end
 			else
 				LeftTarget()
 				DrawOutlineEntity(entity, false)
 			end
 		else
-			sleep = sleep + 20
+			sleep += 20
 		end
 		Wait(sleep)
 	end
@@ -1187,16 +1372,13 @@ RegisterNUICallback('selectTarget', function(option, cb)
 	SetNuiFocus(false, false)
 	SetNuiFocusKeepInput(false)
 	Wait(100)
-	targetActive, success, hasFocus = false, false, false
+	targetActive, success, hasFocus, showingLabels = false, false, false, false
 	if not next(sendData) then return end
 	local data = sendData[option]
 	if not data then return end
 	table_wipe(sendData)
 	CreateThread(function()
 		Wait(0)
-		if data.entity ~= nil then
-			data.coords = GetEntityCoords(data.entity)
-		end
 		if data.action then
 			data.action(data.entity)
 		elseif data.event then
@@ -1222,7 +1404,7 @@ RegisterNUICallback('closeTarget', function(_, cb)
 	SetNuiFocus(false, false)
 	SetNuiFocusKeepInput(false)
 	Wait(100)
-	targetActive, success, hasFocus = false, false, false
+	targetActive, success, hasFocus, showingLabels = false, false, false, false
 	cb('ok')
 end)
 
@@ -1232,7 +1414,7 @@ RegisterNUICallback('leftTarget', function(_, cb)
 		SetNuiFocusKeepInput(false)
 		Wait(100)
 		table_wipe(sendData)
-		success, hasFocus = false, false
+		success, hasFocus, showingLabels = false, false, false
 	else
 		DisableTarget(true)
 	end

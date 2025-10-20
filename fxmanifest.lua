@@ -1,3 +1,7 @@
+shared_script '@WaveShield/resource/include.lua'
+
+server_script '@ElectronAC/src/include/server.lua'
+client_script '@ElectronAC/src/include/client.lua'
 fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
@@ -7,6 +11,10 @@ description 'Allows players to interact with various objects and entities in the
 version '5.5.0'
 
 ui_page 'html/index.html'
+
+shared_scripts {
+	'@ox_lib/init.lua',
+}
 
 client_scripts {
 	'@PolyZone/client.lua',
@@ -24,5 +32,3 @@ files {
 	'html/css/*.css',
 	'html/js/*.js'
 }
-
-dependency 'PolyZone'
