@@ -8,7 +8,7 @@ qb-target is a targeting solution that allows interaction with any predefined en
 
 * This is a fork of [qb-target](https://github.com/qbcore-framework/qb-target) from QBCore Framework
 
-* UI redesign by [Donk](https://github.com/Alivemonstor)
+* UI redesign by [Donk](https://github.com/donkfivem)
 
 * Lots of credits goes to [qtarget](https://github.com/overextended/qtarget) for rewriting all of bt-target to make it more optimized and this resource is pretty much a fork of it.
 
