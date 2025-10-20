@@ -6,6 +6,10 @@ qb-target is a targeting solution that allows interaction with any predefined en
 
 ## Credits
 
+* This is a fork of [qb-target](https://github.com/qbcore-framework/qb-target) from QBCore Framework
+
+* UI redesign by [Donk](https://github.com/Alivemonstor)
+
 * Lots of credits goes to [qtarget](https://github.com/overextended/qtarget) for rewriting all of bt-target to make it more optimized and this resource is pretty much a fork of it.
 
 * Huge credit to [bt-target](https://github.com/brentN5/bt-target) from brentN5 for making the target a thing!
@@ -22,13 +26,13 @@ qb-target is a targeting solution that allows interaction with any predefined en
 
 ## Information
 
-This repository was originally a direct fork and now it's own repository as it's basically qtarget but with lots of changes to it to make it better, most of the code comes from qtarget as I find their work awesome on this and what they've achieved with it.
+This repository is a fork of qb-target from the QBCore Framework with a custom UI redesign by Donk. The targeting system is based on qtarget's excellent work, with modifications and improvements to better integrate with QBCore and provide an enhanced user experience.
 
 You are free to help through Pull Requests and leave as much suggestions or issues, I love some help!
 
 The TEMPLATES.md and EXAMPLES.md are always being improved and new examples can be made on request, just let me know!
 
-## Features 
+## Features
 - Maintains compatibility with bt-target while providing improved utility and performance
 - Optimised and improved raycasting function allows interaction with a wider range of entities
 - Add generic options to apply for all players, peds, vehicles, or objects
