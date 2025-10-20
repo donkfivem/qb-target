@@ -1,6 +1,6 @@
 # qb-target
 
-![qb-target Redesign Preview](https://r2.fivemanage.com/FRw2ddkmLRukwaZQAXbys/qbtarget.png)
+![qb-target Redesign Preview](https://r2.fivemanage.com/FRw2ddkmLRukwaZQAXbys/qb-target.png)
 
 qb-target is a targeting solution that allows interaction with any predefined entity, model, entity type or polyzone. While activated you can easily and safely replace markers and distance checking, instead relying on intuitive design to improve player experiences and optimize interaction.
 
@@ -8,7 +8,7 @@ qb-target is a targeting solution that allows interaction with any predefined en
 
 * This is a fork of [qb-target](https://github.com/qbcore-framework/qb-target) from QBCore Framework
 
-* UI redesign by [Donk](https://github.com/Alivemonstor)
+* UI redesign by [Donk](https://github.com/donkfivem)
 
 * Lots of credits goes to [qtarget](https://github.com/overextended/qtarget) for rewriting all of bt-target to make it more optimized and this resource is pretty much a fork of it.
 
